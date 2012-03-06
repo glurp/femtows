@@ -1,5 +1,7 @@
 The tinyest web server ...
 
+Made to be embedded in any ruby application, test/debug/adminview/...
+
 ```ruby
 # server all file in current dir and .info request
 
