@@ -11,6 +11,7 @@
 require 'thread'
 require 'socket'
 require 'timeout'
+
 #################### Tiny embeded webserver
 class WebserverAbstract
   def logg(*args)  @cb_log && @cb_log.call(@name,*args) end
@@ -162,8 +163,6 @@ class WebserverAbstract
     dir=to_relative(adir)
 	dirs,files=Dir.glob(adir==@rootd ? "#{@rootd}*" : "#{adir}/*").sort.partition { |f| File.directory?(f)}
 
-	files.select! { |f| File.size(f)<(15*1024*1024)}
-	
 	updir = hescape(  dir.split(/\//)[0..-2].join("/")) 
 	updir="/" if updir.length==0
 	up=(dir!="/") ? "<input type='button' onclick='location.href=\"#{updir}\"' value='Parent'>" : ""

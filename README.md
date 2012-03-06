@@ -3,7 +3,7 @@ The tinyest web server ...
 Made to be embedded in any ruby application, test/debug/adminview/...
 
 ```ruby
-# server all file in current dir and .info request
+# server all file in current dir and .info request :
 
 $ws=WebserverRoot.new(ARGV[0].to_i,".","femto ws",10,300, {})
 
