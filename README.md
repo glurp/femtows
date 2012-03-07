@@ -1,3 +1,4 @@
+# Femtows : femto sized web server
 ## Presentation 
 
 The tiny web server ...
@@ -34,8 +35,9 @@ $ws.serve("/info")    {|p|
 ```
 
 Servelt receive params hash which content :
-- all http header, with key upercase
-- http parameters (?a=b&...)
+
+ - all http header, with key upercase
+ - http parameters (?a=b&...)
 
 
 ## License
