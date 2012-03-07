@@ -1,7 +1,27 @@
-The tinyest web server ...
+## Presentation 
+
+The tiny web server ...
 
 Made to be embedded in any ruby application, test/debug/adminview/...
 
+## Install
+
+```bash
+gem install femtows
+```
+
+## Usage
+
+```ruby
+# Cli
+ruby -rfemtows -e "cliweb()"
+or
+femtows.bat
+ou
+femtows.sh
+```
+
+Embedded:
 ```ruby
 # server all file in current dir and .info request :
 
@@ -13,6 +33,10 @@ $ws.serve("/info")    {|p|
 ```
 
 Servelt receive params hash which content :
+- all http header, with key upercase
+- http parameters (?a=b&...)
 
-* all header, with key upercase
-* http parameter
+
+## License
+
+LGPL

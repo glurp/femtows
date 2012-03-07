@@ -211,7 +211,7 @@ class WebserverAbstract
 		  f.binmode; sock.binmode; 
 		  ( sock.write(f.read(32*1024)) while (! f.eof? && ! sock.closed?) ) rescue nil
 		end
-	}
+	} 
   end
   def httpdate( aTime ); (aTime||Time.now).gmtime.strftime( "%a, %d %b %Y %H:%M:%S GMT" ); end
   def mime(string)
@@ -241,3 +241,11 @@ class WebserverRoot < WebserverAbstract
     super(port,root,name,cadence,timeout,options)
   end
 end 
+def cliweb()
+	Thread.abort_on_exception = false
+	BasicSocket.do_not_reverse_lookup = true
+	port=59999
+	$ws=WebserverRoot.new(port,'.','femto ws',10,300, {});
+	puts "Serve path #{Dir.getwd} with port #{port}"
+	sleep
+end
