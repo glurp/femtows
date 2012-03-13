@@ -13,18 +13,16 @@ class Server < Ruiby_gtk
 	end
 	def component
 		stack {
-			stacki {
-				flowi {
-					table(2,2) {
-						row { cell_right label("root") ; cell(@eroot=entry(@root)) }
-						row { cell_right label("port") ; cell(@eport=ientry(@port,:min=>0,:max=>65535,:by=>10)) }
-					}
-					button("Restart") { 
-						@root,@port=@eroot.text,@eport.text.to_i
-						$ws.stop_browser if $ws
-						run_server
-						deflog("","","restart ok")
-					}
+			flowi {
+				table(2,2) {
+					row { cell_right label("root") ; cell(@eroot=entry(@root)) }
+					row { cell_right label("port") ; cell(@eport=ientry(@port,:min=>0,:max=>65535,:by=>10)) }
+				}
+				button("Restart") { 
+					@root,@port=@eroot.text,@eport.text.to_i
+					$ws.stop_browser if $ws
+					run_server
+					deflog("","","restart ok")
 				}
 			}
 			@logt= slot(text_area(800,160,{font: "courier new 8"})).children[0]
