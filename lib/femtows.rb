@@ -14,7 +14,7 @@ require 'timeout'
 
 #################### Tiny embeded webserver
 class WebserverAbstract
-  def logg(*args)  @cb_log && @cb_log.call(@name,*args) end
+  def logg(*args)  @cb_log && @cb_log.call(@name,*args) || puts args.join(" ")  end
   def info(txt) ; logg("nw>i>",txt) ;  end
   def error(txt) ; logg("nw>e>",txt) ; end
   def unescape(string) ; string.tr('+', ' ').gsub(/((?:%[0-9a-fA-F]{2}))/n) { [$1.delete('%')].pack('H*') } ;  end
@@ -58,7 +58,6 @@ class WebserverAbstract
 			  session.close rescue nil
 			  @server.close rescue nil
 			end
-			(error("too much error consecutive");exit!(0)) if nbError>3
 			sleep(3); info("restart accept")
 		}
 	}

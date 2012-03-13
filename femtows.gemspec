@@ -19,7 +19,7 @@ EEND
   s.files         = Dir['**/*']
   s.test_files    = Dir['samples/**'] 
   s.require_paths = ["lib"]
-  
+  s.executables   = `ls bin/*`.split("\n").map{ |f| File.basename(f) }  
   
   ## Make sure you can build the gem on older versions of RubyGems too:
   s.rubygems_version = "1.8.15"
