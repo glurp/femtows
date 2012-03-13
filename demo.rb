@@ -11,7 +11,7 @@ def logger(name="",adr="",*res)
 end
 Thread.new do
   loop do
-     sleep 10
+     sleep 10 
 	 if $loggs.size>0
 	  File.open($file_log,"a") { |f| f.puts( $loggs.pop ) while $loggs.size>0 }
 	 end
