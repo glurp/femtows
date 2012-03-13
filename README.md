@@ -4,7 +4,7 @@
 The tiny web server ...
 230 Lines of code.
 
-Build to be embedded in any ruby application, test/debug/admin-debug-access/...
+Build to be embedded in any ruby application, test/debug/admin access...
 
 ## Install
 
@@ -17,8 +17,9 @@ gem install femtows
 ```ruby
 > ruby -rfemtows -e "cliweb()"
 > ruby -rfemtows -e "cliweb(8080,'/tmp')"
+or
 > femtows.bat
-> femtows.sh
+# femtows.sh
 ```
 
 Embedded:
@@ -33,9 +34,22 @@ $ws.serve("/info")    {|p|
 }
 ```
 
-Servelt receive params hash which content :
+## API
 
- - all http header, with key upercase, prefixed with HEAD
+```ruby
+WebserverRoot.new(
+	port_http,  # server http  port (>1024 on posix, if not root)
+	root-dir,	# only one file root. indexed by defalut
+	ws_name,	# name in trace & index title 
+	10,300, 	# watch too long connection: every  10 secondes, 
+				# kill session which have started from more than 300 seconds
+	{}			# options. only one, for logg events , see demo.rb
+)
+```
+
+Servelet receive params hash which content :
+
+ - all http header, with key upercase, prefixed with 'HEAD-'
  - http parameters (?a=b&...)
 
 Exemple : http://localhost:9980/info?aa=bb&cc=dd, give with p.to_a.inspect:
