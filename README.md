@@ -37,7 +37,9 @@ Servelt receive params hash which content :
 
  - all http header, with key upercase, prefixed with HEAD
  - http parameters (?a=b&...)
+
 Exemple : http://localhost:9980/info?aa=bb&cc=dd, give with p.to_a.inspect:
+
 ```
 ["aa", "bb"]
 ["cc", "dd"]
