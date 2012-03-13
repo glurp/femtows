@@ -6,7 +6,8 @@ $loggs= Queue.new
 $file_log="femtows.log"
 def logger(name="",adr="",*res) 
   mess= "%s | %-10s|%15s | %s" % [Time.now.strftime("%Y-%m-%d %H:%M:%S"),name,adr,res.join(" ")]
-  $loggs.push(mess)
+  ($loggs.size<1000) ? $loggs.push(mess) : put(mess)
+  true
 end
 Thread.new do
   loop do

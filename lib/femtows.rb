@@ -14,7 +14,7 @@ require 'timeout'
 
 #################### Tiny embeded webserver
 class WebserverAbstract
-  def logg(*args)  @cb_log && @cb_log.call(@name,*args) || puts args.join(" ")  end
+  def logg(*args)  @cb_log && @cb_log.call(@name,*args) || puts(args.join(" ")) ; end
   def info(txt) ; logg("nw>i>",txt) ;  end
   def error(txt) ; logg("nw>e>",txt) ; end
   def unescape(string) ; string.tr('+', ' ').gsub(/((?:%[0-9a-fA-F]{2}))/n) { [$1.delete('%')].pack('H*') } ;  end
@@ -29,9 +29,11 @@ class WebserverAbstract
 	end ; end
   end
   def initialize(port,root,name,cadence,timeout,options)
+	raise("tcp port illegal #{port}") unless port.to_i>=80
+	raise("root not exist #{root}") unless File.exists?(root)
     @cb_log= options["logg"] 
     @last_mtime=File.mtime(__FILE__)
-	@port=port
+	@port=port.to_i
 	@root=root
 	@name=name
 	@rootd=root[-1,1]=="/" ? root : root+"/" 
@@ -80,7 +82,6 @@ class WebserverAbstract
   def request(session)
 	  request = session.gets
 	  uri = (request.split(/\s+/)+['','',''])[1] 
-      logg(session.peeraddr.last,request.chomp+ " ...") 
 	  #info uri
 	  service,param,*bidon=(uri+"?").split(/\?/)
 	  params=Hash[*(param.split(/#/)[0].split(/[=&]/))] rescue {}
@@ -93,7 +94,6 @@ class WebserverAbstract
 	  end
 	  read_header(session,params)
 	  do_service(session,request,uri,userpass,params)
-      logg(session.peeraddr.last,request.chomp + " ... ok") 
   rescue Exception => e
 	error("Error Web get on #{request}: \n #{$!.to_s} \n #{$!.backtrace.join("\n     ")}" ) rescue nil
 	session.write "HTTP/1.0 501 NOK\r\nContent-type: text/html\r\n\r\n<html><head><title>WS</title></head><body>Error : #{$!}" rescue nil
@@ -240,11 +240,10 @@ class WebserverRoot < WebserverAbstract
     super(port,root,name,cadence,timeout,options)
   end
 end 
-def cliweb()
+def cliweb(root=Dir.getwd,port=59999)
 	Thread.abort_on_exception = false
 	BasicSocket.do_not_reverse_lookup = true
-	port=59999
-	$ws=WebserverRoot.new(port,'.','femto ws',10,300, {});
-	puts "Serve path #{Dir.getwd} with port #{port}"
+	$ws=WebserverRoot.new(port,root,'femto ws',10,300, {});
+	puts "Server root path #{root} with port #{port}"
 	sleep
 end
