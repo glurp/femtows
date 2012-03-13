@@ -1,3 +1,4 @@
+﻿# encoding: utf-8
 # FemtoWebServer : 232 LOC web server
 #
 #   $ws=WebserverRoot.new(port,"/home/www","femto ws",10,300)
@@ -13,8 +14,16 @@ require 'socket'
 require 'timeout'
 
 #################### Tiny embeded webserver
+
+
+
+
 class WebserverAbstract
-  def logg(*args)  @cb_log && @cb_log.call(@name,*args) || puts(args.join(" ")) ; end
+  def logg(*args) 
+	if @cb_log then @cb_log.call(@name,*args) else puts(args.join(" ")) end
+  rescue
+   puts(args.join(" "))
+  end
   def info(txt) ; logg("nw>i>",txt) ;  end
   def error(txt) ; logg("nw>e>",txt) ; end
   def unescape(string) ; string.tr('+', ' ').gsub(/((?:%[0-9a-fA-F]{2}))/n) { [$1.delete('%')].pack('H*') } ;  end
@@ -101,7 +110,6 @@ class WebserverAbstract
 	session.close rescue nil
   end  
   def read_header(session,params)
-	timeout(120) do
 	   head=session.gets("\r\n\r\n")
 	   head.split(/\r\n/m).each { |line| name,data=line.split(": ",2) ; params["HEAD-"+name.upcase]=data }
 	   if params["HEAD-CONTENT-LENGTH"]
@@ -116,7 +124,6 @@ class WebserverAbstract
 			end	
 		    params["HEAD-DATA"]=data
 	   end
-	end
   end
   
   def redirect(o,d)
@@ -155,8 +162,10 @@ class WebserverAbstract
   end
   def stop_browser
 	info "exit on web demand !"
-	@serveur.close rescue nil
 	[@tho,@thm].each { |th| th.kill }
+	sleep 0.1
+	@server.close rescue nil
+	sleep 0.1
   end
   def makeIndex(adir)
     dir=to_relative(adir)
