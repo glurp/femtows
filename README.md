@@ -2,8 +2,9 @@
 ## Presentation 
 
 The tiny web server ...
+230 Lines of code.
 
-Made to be embedded in any ruby application, test/debug/adminview/...
+Build to be embedded in any ruby application, test/debug/admin-debug-access/...
 
 ## Install
 
@@ -14,12 +15,10 @@ gem install femtows
 ## Usage
 
 ```ruby
-# Cli
-ruby -rfemtows -e "cliweb()"
-or
-femtows.bat
-ou
-femtows.sh
+> ruby -rfemtows -e "cliweb()"
+> ruby -rfemtows -e "cliweb(8080,'/tmp')"
+> femtows.bat
+> femtows.sh
 ```
 
 Embedded:
@@ -27,7 +26,7 @@ Embedded:
 ```ruby
 # server all file in current dir and .info request :
 
-$ws=WebserverRoot.new(ARGV[0].to_i,".","femto ws",10,300, {})
+$ws=WebserverRoot.new(8080,"/tmp","femto ws",10,300, {})
 
 $ws.serve("/info")    {|p|  
  [200,".html", "Femto demo<hr><a href='/'>site</a><hr>#{$ws.to_table(p)}" ] 
