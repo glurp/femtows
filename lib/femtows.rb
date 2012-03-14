@@ -163,9 +163,7 @@ class WebserverAbstract
   def stop_browser
 	info "exit on web demand !"
 	[@tho,@thm].each { |th| th.kill }
-	sleep 0.1
 	@server.close rescue nil
-	sleep 0.1
   end
   def makeIndex(adir)
     dir=to_relative(adir)

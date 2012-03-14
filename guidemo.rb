@@ -1,7 +1,7 @@
-#require_relative "lib/femtows.rb"
-#require_relative '../../Ruiby/lib/ruiby.rb'
-require 'femtows'
-require 'ruiby'
+require_relative '../../Ruiby/lib/ruiby.rb'
+require_relative "lib/femtows.rb"
+#require 'ruiby'
+ruiby_require 'erubis','xxx'
 
 class Server < Ruiby_gtk
 	def initialize(t,w,h)
@@ -24,9 +24,9 @@ class Server < Ruiby_gtk
 					run_server
 					deflog("","","restart ok")
 				}
+				button("reset log") { @logt.buffer.text="resetted" }
 			}
-			@logt= slot(text_area(800,160,{font: "courier new 8"})).children[0]
-			sloti(button("reset log") { @logt.buffer.text="resetted" })
+			@logt= slot(text_area(800,160,{font: "courier new 8"}))
 		}
 	end
 	def run_server
@@ -45,15 +45,15 @@ class Server < Ruiby_gtk
 		end
 	end
 	def logs(mess)
-		@logt.buffer.text+=mess 
-		if @logt.buffer.text.size>1000*1000
-		  @logt.buffer.text=@logt.buffer.text[10*1000..-1]
+		@logt.append(mess)
+		if @logt.text.size>100*1000
+		  @logt.text=@logt.text[500..-1]
 		end
 	end
 end
 def deflog(name,adr,*res) 
 		mess= "%s |%15s | %s\n" % [Time.now.strftime("%Y-%m-%d %H:%M:%S"),adr,res.join(" ")]
-		gui_invoke { logs(mess) rescue print $!.to_s+" "+mess}
+		gui_invoke { logs(mess) rescue print $!.to_s+ $!.backtrace.join("\n")+"\n /// "+mess}
 end
 
 
