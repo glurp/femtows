@@ -1,7 +1,7 @@
-require_relative '../../Ruiby/lib/ruiby.rb'
-require_relative "lib/femtows.rb"
-#require 'ruiby'
-#require 'femtows'
+#require_relative '../../Ruiby/lib/ruiby.rb'
+#require_relative "lib/femtows.rb"
+require 'ruiby'
+require 'femtows'
 
 ruiby_require 'erubis','xxx'
 
