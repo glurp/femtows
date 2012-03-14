@@ -1,6 +1,8 @@
 require_relative '../../Ruiby/lib/ruiby.rb'
 require_relative "lib/femtows.rb"
 #require 'ruiby'
+#require 'femtows'
+
 ruiby_require 'erubis','xxx'
 
 class Server < Ruiby_gtk
@@ -24,7 +26,7 @@ class Server < Ruiby_gtk
 					run_server
 					deflog("","","restart ok")
 				}
-				button("reset log") { @logt.buffer.text="resetted" }
+				button("reset log") { @logt.text="resetted\n" }
 			}
 			@logt= slot(text_area(800,160,{font: "courier new 8"}))
 		}
