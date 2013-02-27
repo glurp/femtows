@@ -1,6 +1,5 @@
 # -*- encoding: utf-8 -*-
 $:.push('lib')
-require "ruiby/version"
 
 Gem::Specification.new do |s|
   s.name     = "femtows"
@@ -16,7 +15,7 @@ embededded, http experimentations
 EEND
   
   
-  s.files         = Dir['**/*']
+  s.files         = Dir['**/*.rb']+Dir['**/*.sh']+Dir['**/*.bat']
   s.test_files    = Dir['samples/**'] 
   s.require_paths = ["lib"]
   s.executables   = `ls bin/*`.split("\n").map{ |f| File.basename(f) }  

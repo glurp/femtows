@@ -130,7 +130,6 @@ class WebserverAbstract
    @redirect[o]=d
   end  
   def do_service(session,request,service,user_passwd,params)
-    logg(session.peeraddr.last,request.chomp) 
 	redir=@redirect["/"+service]
 	service=redir.gsub(/^\//,"") if @redirect[redir]
 	aservice=to_absolute(service)
