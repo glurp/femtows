@@ -16,7 +16,7 @@ gem install femtows
 
 ```ruby
 > ruby -rfemtows -e "cliweb()"
-> ruby -rfemtows -e "cliweb(8080,'/tmp')"
+> ruby -rfemtows -e "cliweb('/tmp',8080)"
 or
 > femtows.bat
 # femtows.sh
