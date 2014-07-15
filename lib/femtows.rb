@@ -171,7 +171,7 @@ class WebserverAbstract
 	updir = hescape(  dir.split(/\//)[0..-2].join("/")) 
 	updir="/" if updir.length==0
 	up=(dir!="/") ? "<input type='button' onclick='location.href=\"#{updir}\"' value='Parent'>" : ""
-	"<html><head><title>#{dir}</title></head>\n<body><h3><center>#{@name} : #{dir[0..-1]}</center></h3>\n<hr>#{up}<br>#{to_table(dirs.map {|s| " <a href='#{hescape(to_relative(s))}'>"+File.basename(s)+"/"+"</a>\n"})}<hr>#{to_tableb(files) {|f| [" <a href='#{hescape(to_relative(f))}'>"+File.basename(f)+"</a>",n3(File.size(f)),File.mtime(f).strftime("%d/%m/%Y %H:%M:%S")]}}</body></html>"
+	"<html><head><title>#{dir}</title></head>\n<body><h3><center>#{@name} : #{dir[0..-1]}</center></h3>\n<hr>#{up}<br>#{to_table(dirs.map {|s| " <a href='#{to_relative(s)}'>"+File.basename(s)+"/"+"</a>\n"})}<hr>#{to_tableb(files) {|f| [" <a href='#{hescape(to_relative(f))}'>"+File.basename(f)+"</a>",n3(File.size(f)),File.mtime(f).strftime("%d/%m/%Y %H:%M:%S")]}}</body></html>"
   end  
   def to_relative(f)  f.gsub(/^#{@rootd}/,"/") end
   def to_absolute(f)  "#{@rootd}#{f.gsub(/^\//,'')}" end
@@ -223,7 +223,7 @@ class WebserverAbstract
 	 MIME[string.split(/\./).last] || "application/octet-stream"
   end
   LICON="&#9728;&#9731;&#9742;&#9745;&#9745;&#9760;&#9763;&#9774;&#9786;&#9730;".split(/;/).map {|c| c+";"}
-  MIME={"png" => "image/png", "gif" => "image/gif", "html" => "text/html","htm" => "text/html",
+  MIME={"png" => "image/png", "gif" => "image/gif", "html" => "text/html;charset=utf-8","htm" => "text/html;charset=utf-8",
 	"js" => "text/javascript" ,"css" => "text/css","jpeg" => "image/jpeg" ,"jpg" => "image/jpeg",
 	".json" => "applicatipon/json",
 	"pdf"=> "application/pdf"   , "svg" => "image/svg+xml","svgz" => "image/svg+xml",
@@ -250,6 +250,6 @@ def cliweb(root=Dir.getwd,port=59999)
 	Thread.abort_on_exception = false
 	BasicSocket.do_not_reverse_lookup = true
 	$ws=WebserverRoot.new(port,root,'femto ws',10,300, {});
-	puts "Server root path #{root} with port #{port}"
+	puts "Server root path #{root} with port #{port} ready..."
 	sleep
 end
