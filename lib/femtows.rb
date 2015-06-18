@@ -26,8 +26,8 @@ class WebserverAbstract
   end
   def info(txt) ; logg("nw>i>",txt) ;  end
   def error(txt) ; logg("nw>e>",txt) ; end
-  def unescape(string) ; string.tr('+', ' ').gsub(/((?:%[0-9a-fA-F]{2}))/n) { [$1.delete('%')].pack('H*') } ;  end
-  def escape(string) ; string.gsub(/([^ \/a-zA-Z0-9_.-]+)/) { '%' + $1.unpack('H2' * $1.size).join('%').upcase }.tr(' ', '+');  end
+  def unescape(string) ; string.tr('+', ' ').gsub(/((?:%[0-9a-fA-F]{2}))/n) { [$1.delete('%')].pack('H*') }   end
+  def escape(string) ; string.gsub(/([^ \/a-zA-Z0-9_.\-]+)/) { '%' + $1.unpack('H2' * $1.size).join('%').upcase }.tr(' ', '+')  end
   def hescape(string) ;  escape(string.gsub("/./","/").gsub("//","/")) ; end
   def observe(sleeping,delta)
 	@tho=Thread.new do loop do
@@ -90,6 +90,7 @@ class WebserverAbstract
   end  
   def request(session)
 	  request = session.gets
+    return unless request
 	  uri = (request.split(/\s+/)+['','',''])[1] 
 	  #info uri
 	  service,param,*bidon=(uri+"?").split(/\?/)
