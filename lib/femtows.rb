@@ -52,6 +52,7 @@ class WebserverAbstract
 	@redirect={}
 	info(" serveur http #{port} on #{@rootd} ready!")
 	observe(cadence,timeout*2)
+        pool_create
 	@thm=Thread.new { 
 		loop { 
 			nbError=0
@@ -73,17 +74,23 @@ class WebserverAbstract
 		}
 	}
   end
+  def pool_create
+    @queue=Queue.new
+    ici=self
+    100.times {  Thread.new { loop { 
+      param,bloc=@queue.pop
+      bloc.call(param)  rescue p $!
+    } } }
+  end
+  def pool_get(param,&block)
+     @queue.push([param,block])
+  end
   def run(session)
-	if ! File.exists?(@root)
-	  sendError(session,500,txt="root directory unknown: #{@root}") rescue nil
-	  session.close rescue nil
-	else
-		Thread.new(session) do |sess|
+		pool_get(session) do |sess|
 		   @th[Thread.current]=[Time.now,sess]
 		   request(sess) 
 		   @th.delete(Thread.current) 
 		end
-	end
   end
   def serve(uri,&blk)
 	@cb[uri] = blk
