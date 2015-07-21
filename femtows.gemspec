@@ -29,7 +29,9 @@ EEND
 -------------------------------------------------------------------------------
 Hello, welcome to Femto Web Server....
 
-$ femtows [port,[root-directory] 
+$ femtows.sh [port,[root-directory] 
+or
+$ femtows.bat [port,[root-directory] 
 
 -------------------------------------------------------------------------------
 TTEXT
