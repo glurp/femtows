@@ -38,23 +38,22 @@ class WebserverAbstract
 	end ; end
   end
   def initialize(port,root,name,cadence,timeout,options)
-	raise("tcp port illegal #{port}") unless port.to_i>=80
-	raise("root not exist #{root}") unless File.exists?(root)
+    raise("tcp port illegal #{port}") unless port.to_i>=80
+    raise("root not exist #{root}") unless File.exists?(root)
     @cb_log= options["logg"] 
     @last_mtime=File.mtime(__FILE__)
-	@port=port.to_i
-	@root=root
-	@name=name
-	@rootd=root[-1,1]=="/" ? root : root+"/" 
-	@timeout=timeout
-	@th={}
-	@cb={}
-	@redirect={}
-	info(" serveur http #{port} on #{@rootd} ready!")
-	observe(cadence,timeout*2)
-        pool_create
-	@thm=Thread.new { 
-		loop { 
+    @port=port.to_i
+    @root=root
+    @name=name
+    @rootd=root[-1,1]=="/" ? root : root+"/" 
+    @timeout=timeout
+    @th={}
+    @cb={}
+    @redirect={}
+    info(" serveur http #{port} on #{@rootd} ready!")
+    observe(cadence,timeout*2)
+    pool_create
+    @thm=Thread.new { sleep(0.1); loop { 
 			nbError=0
 			begin
 				session=nil
@@ -71,8 +70,7 @@ class WebserverAbstract
 			  @server.close rescue nil
 			end
 			sleep(3); info("restart accept")
-		}
-	}
+		}	}
   end
   def pool_create
     @queue=Queue.new
@@ -93,7 +91,8 @@ class WebserverAbstract
 		end
   end
   def serve(uri,&blk)
-	@cb[uri] = blk
+    @cb[uri] = blk
+    puts(" registered #{uri}")
   end  
   def request(session)
 	  request = session.gets
@@ -138,34 +137,34 @@ class WebserverAbstract
    @redirect[o]=d
   end  
   def do_service(session,request,service,user_passwd,params)
-	redir=@redirect["/"+service]
-	service=redir.gsub(/^\//,"") if @redirect[redir]
-	aservice=to_absolute(service)
-	if redir &&  ! @redirect[redir] 
-	  do_service(session,request,redir.gsub(/^\//,""),user_passwd,params)
-	elsif @cb["/"+service]
-	  begin
-	   code,type,data= @cb["/"+service].call(params)
-	   if code==0 && data != '/'+service
-		  do_service(session,request,data[1..-1],user_passwd,params)
-	   else
-		 code==200 ?  sendData(session,type,data) : sendError(session,code,data)
-	   end
-	  rescue
-	   logg session.peeraddr.last,"Error in get /#{service} : #{$!}"
-	   sendError(session,501,$!.to_s)
-	  end
-	elsif service =~ /^stop/ 
-	  sendData(session,".html","Stopping...");	   
-	  Thread.new() { sleep(0.1); stop_browser()  }
-	elsif File.directory?(aservice)
-	  sendData(session,".html",makeIndex(aservice))
-	elsif File.exists?(aservice)
-	  sendFile(session,aservice)
-	else
-	  info("unknown request serv=#{service} params=#{params.inspect} #{File.exists?(service)}")
-	  sendError(session,500,"unknown request serv=#{aservice} params=#{params.inspect} #{File.exists?(service)}");
-	end
+    redir=@redirect["/"+service]
+    service=redir.gsub(/^\//,"") if @redirect[redir]
+    aservice=to_absolute(service)
+    if redir &&  ! @redirect[redir] 
+      do_service(session,request,redir.gsub(/^\//,""),user_passwd,params)
+    elsif @cb["/"+service]
+      begin
+        code,type,data= @cb["/"+service].call(params)
+        if code==0 && data != '/'+service
+          do_service(session,request,data[1..-1],user_passwd,params)
+        else
+          code==200 ?  sendData(session,type,data) : sendError(session,code,data)
+        end
+      rescue
+       logg session.peeraddr.last,"Error in get /#{service} : #{$!}"
+       sendError(session,501,"#{$!} : at #{$!.backtrace.first}")
+      end
+    elsif service =~ /^stop/ 
+      sendData(session,".html","Stopping...");	   
+      Thread.new() { sleep(0.1); stop_browser()  }
+    elsif File.directory?(aservice)
+      sendData(session,".html",makeIndex(aservice))
+    elsif File.exists?(aservice)
+      sendFile(session,aservice)
+    else
+      info("unknown request serv=#{service} params=#{params.inspect} #{File.exists?(service)}")
+      sendError(session,500,"unknown request serv=#{aservice} params=#{params.inspect} #{File.exists?(service)}");
+    end
   end
   def stop_browser
 	info "exit on web demand !"
@@ -226,7 +225,7 @@ class WebserverAbstract
 		end
 	} 
   end
-  def httpdate( aTime ); (aTime||Time.now).gmtime.strftime( "%a, %d %b %Y %H:%M:%S GMT" ); end
+  def httpdate( aTime=nil ); (aTime||Time.now).gmtime.strftime( "%a, %d %b %Y %H:%M:%S GMT" ); end
   def mime(string)
 	 MIME[string.split(/\./).last] || "application/octet-stream"
   end
@@ -260,4 +259,18 @@ def cliweb(root=Dir.getwd,port=59999)
 	$ws=WebserverRoot.new(port,root,'femto ws',10,300, {});
 	puts "Server root path #{root} with port #{port}"
 	sleep
+end
+###################### another api
+class Fem < WebserverAbstract
+  def initialize(port=7080,root=".",name="wwww",cadence=10,timeout=120)
+    super(port,root,name,cadence,timeout,{})
+    introspect
+  end
+  def introspect()
+    exp=/^(get|post)_(\w[\w\d]*)_(\w+)$/
+    methods.grep(exp).each { |name| 
+      all,method,key,mime= exp.match(name).to_a
+      serve("/#{key}") { |par| [200,".#{mime}",self.send(all,par)] }
+    }
+  end
 end

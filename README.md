@@ -22,7 +22,7 @@ or
 # femtows.sh
 ```
 
-Embedded:
+Embedded V1:
 
 ```ruby
 # server all file in current dir and .info request :
@@ -34,6 +34,22 @@ $ws.serve("/info")    {|p|
 }
 ```
 
+Embedded V2:
+```
+class App < Fem
+  def get_app_html(p)
+    "<html><body><h2><center>Hello</center></h2><hr>
+      <p>#{content}</p><hr><center>[femtows]</center>
+    </body></html>"
+  end
+  def content
+    to_tableb(Dir.glob("*.rb")) {|f| [f,File.size(f),File.mtime(f)]}
+  end
+end
+App.new(ARGV[0].to_i)
+```
+
+
 ## API
 
 ```ruby
@@ -42,8 +58,8 @@ WebserverRoot.new(
 	root-dir,	# only one file root. indexed by defalut
 	ws_name,	# name in trace & index title 
 	10,300, 	# watch too long connection: every  10 secondes, 
-				# kill session which have started from more than 300 seconds
-	{}			# options. only one, for logg events , see demo.rb
+				    # kill session which have started from more than 300 seconds
+	{}			  # options. only one, for logg events , see demo.rb
 )
 ```
 
