@@ -22,7 +22,7 @@ or
 # femtows.sh
 ```
 
-Embedded V1:
+### Embedded V1:
 
 ```ruby
 # server all file in current dir and .info request :
@@ -34,8 +34,8 @@ $ws.serve("/info")    {|p|
 }
 ```
 
-Embedded V2:
-```
+### Embedded V2:
+```ruby
 class App < Fem
   def get_app_html(p)
     "<html><body><h2><center>Hello</center></h2><hr>
@@ -48,6 +48,10 @@ class App < Fem
 end
 App.new(ARGV[0].to_i)
 ```
+
+With v2, all methods which name match get_(*)_(*) will be associate with url /\1
+and his output will be sending with MIME code \2.
+
 
 
 ## API
@@ -63,7 +67,7 @@ WebserverRoot.new(
 )
 ```
 
-Servelet receive params hash which content :
+Servlet receive params hash which content :
 
  - all http header, with key upercase, prefixed with 'HEAD-'
  - http parameters (?a=b&...)
