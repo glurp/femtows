@@ -8,14 +8,37 @@
 #      [200,".json",""]
 # end
   
-  
+require 'tmpdir'  
 require 'thread'
 require 'socket'
 require 'timeout'
+require 'net/http'
+
+#################### monkey-patching BufferedIO:  timeout read and read/chomp
+module Net
+  class BufferedIO
+	def read_until_chomp(sep)
+		s=readuntil(sep)
+		s ? s.chomp(sep) : nil
+	end
+	def read_until_maxsize(terminator,maxsize)
+      begin
+        while (! idx=@rbuf.index(terminator)) && @rbuf.size < maxsize
+          rbuf_fill
+        end
+        if idx && idx.kind_of?(Numeric) 
+		  return rbuf_consume( idx + terminator.size)
+		else
+		  return rbuf_consume(@rbuf.size)
+		end
+      rescue EOFError
+	    return  (@rbuf.size>0) ? rbuf_consume(@rbuf.size) : nil
+      end
+    end
+  end
+end
 
 #################### Tiny embeded webserver
-
-
 
 
 class WebserverAbstract
@@ -83,6 +106,9 @@ class WebserverAbstract
   def pool_get(param,&block)
      @queue.push([param,block])
   end
+  def touch_session(sess)
+	@th[Thread.current]=[Time.now,sess]
+  end
   def run(session)
 		pool_get(session) do |sess|
 		   @th[Thread.current]=[Time.now,sess]
@@ -118,8 +144,8 @@ class WebserverAbstract
   end  
   def read_header(session,params)
 	   head=session.gets("\r\n\r\n")
-	   head.split(/\r\n/m).each { |line| name,data=line.split(": ",2) ; params["HEAD-"+name.upcase]=data }
-	   if params["HEAD-CONTENT-LENGTH"]
+	   params=parse_header(head,"HEAD-")
+	   if params["HEAD-CONTENT-LENGTH"] &&  params["HEAD-CONTENT-TYPE"] !~ /multipart/
 			len= params["HEAD-CONTENT-LENGTH"].split(/\s+/).last.to_i
 			params["HEAD-CONTENT-LENGTH"]=len
 			data=""
@@ -130,9 +156,99 @@ class WebserverAbstract
 				data+=d
 			end	
 		    params["HEAD-DATA"]=data
+		elsif params["HEAD-CONTENT-TYPE"] && params["HEAD-CONTENT-TYPE"]=~ /^multipart\/form-data;\s*boundary=(.*)$/
+		  params["HEAD-BOUNDARY"]=$1
+		  params["HEAD-INPUT-STREAM"]="multipart" 
+		  Thread.current[:socket]=session
+		  Thread.current[:head]=params
 	   end
   end
+  def parse_header(head,prefixe)
+	head.split("\r\n").each_with_object({}) { |line,h| 
+		name,data=line.split(": ",2)
+		h[prefixe+name.upcase]=data 
+	}
+  end
+  def stream_input(&b) # to be call in the get: get("..") { stream_input {|type,name,value,header| } ; [...]}
+	socket=Thread.current[:socket]
+	params=Thread.current[:head]
+	if params["HEAD-INPUT-STREAM"]=="multipart"
+		receive_multipart(socket,params["HEAD-BOUNDARY"],params,&b)
+	else
+	  logg "stream_input() on  unknown type"
+	end
+  end  
+
+	# Exemple get / multipart :
+	# -----------------------------203361401820634              # first boundary, ignored
+	# Content-Disposition: form-data; name="text"
+    #
+	# fqdsfdfqsdfqdfqsdqsdfsdff text input...
+	# -----------------------------203361401820634              # normal boundaru : ended by \r\n
+	# Content-Disposition: form-data; name="file1"; filename="notes.txt"
+	# Content-Type: text/plain
+    #
+	# FILECONTNE
+	# FILECONTNE
+	# FILECONTNE
+	# FILECONTNE
+	# -----------------------------203361401820634
+	# Content-Disposition: form-data; name="file2"; filename=""
+	# Content-Type: application/octet-stream
+    #
+	# FILECONTNE
+	# FILECONTNE
+	# -----------------------------203361401820634--            # last boundary, end with '--'
+
   
+  def receive_multipart(sess,boundary,params,&b)
+	bound= "\r\n--#{boundary}"
+	
+	socket=::Net::BufferedIO.new(sess)
+	socket.read_timeout= 120
+	socket.continue_timeout= 60
+	
+	str=socket.read_until_chomp("\r\n") # pass first boundary
+	while str!=nil
+		touch_session(sess)
+		head=socket.read_until_maxsize("\r\n\r\n",2**14)
+		break unless head 
+	    mparams=parse_header(head,"MHEAD-")
+		next if mparams.size==0
+		name_field=unescape(mparams["MHEAD-CONTENT-DISPOSITION"][/name="(.*?)"/,1])
+		filename=mparams["MHEAD-CONTENT-DISPOSITION"][/filename="(.*?)"/,1]
+		if filename
+			tmpfile,ended=read_part_file(socket,filename,bound)
+			b.call(name_field,:file,tmpfile,mparams)
+			break if ended
+		else
+			data=socket.read_until_chomp(bound)
+			b.call(name_field,:text,data,mparams)
+			str=socket.read(2)
+			break if (str && str=="--" )
+		end
+	end
+	logg "end all part readed"
+  end
+  def read_part_file(socket,filename,bound)
+    filename="unknown" if filename.size==0
+	tmpfile="#{Dir.tmpdir()}/femtows_#{filename}_#{(Time.now.to_f*1000).round}"
+	File.remove(tmpfile) if File.exists?(tmpfile)  
+	open(tmpfile,"wb:ASCII-8BIT") do |f|
+		while  str=socket.read_until_maxsize(bound,2**20)
+			if str.end_with?(bound)
+			  f.print(str[0,str.size-bound.size])
+			  break
+			else
+			  f.print(str)
+			end
+		end
+	end
+	str=socket.read(2)
+	ended=(str && str=="--" ) ? true : false
+	#logg " end geting part type=file, tmp=",tmpfile,"size=",File.size(tmpfile)
+	return [tmpfile,ended]
+  end
   def redirect(o,d)
    @redirect[o]=d
   end  
@@ -151,7 +267,7 @@ class WebserverAbstract
           code==200 ?  sendData(session,type,data) : sendError(session,code,data)
         end
       rescue
-       logg session.peeraddr.last,"Error in get /#{service} : #{$!}"
+       logg session.peeraddr.last,"Error in get /#{service} : #{$!} \n   #{$!.backtrace.join("\n   ")}"
        sendError(session,501,"#{$!} : at #{$!.backtrace.first}")
       end
     elsif service =~ /^stop/ 
@@ -217,7 +333,7 @@ class WebserverAbstract
   		return
   	end
 	logg @name,filename," #{s/(1024*1024)} Mo" if s>10*1000_000
-	timeout([s/(512*1024),30.0].max.to_i) {
+	Timeout.timeout([s/(512*1024),30.0].max.to_i) {
 		sock.write "HTTP/1.0 200 OK\r\nContent-Type: #{mime(filename)}\r\nContent-Length: #{File.size(filename)}\r\nLast-Modified: #{httpdate(File.mtime(filename))}\r\nDate: #{httpdate(Time.now)}\r\n\r\n"
 		File.open(filename,"rb") do |f| 
 		  f.binmode; sock.binmode; 
