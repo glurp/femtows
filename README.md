@@ -15,7 +15,7 @@ Features :
 * multipart dynamic (can be active continiously, a timeout inter-part is setted to 10 minutes)
 * http redirection
 
-Performences are not to bad : better then default Rack server, best than  Sinatra/Thin)
+Performances are not so bad : better than Sinatra/Thin, near Puma/Thin)
 
 ## Install
 
